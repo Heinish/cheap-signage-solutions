@@ -49,7 +49,9 @@ apt-get install -y \
     jq \
     xdotool \
     unclutter \
-    x11-xserver-utils
+    x11-xserver-utils \
+    grim \
+    scrot
 
 echo ""
 echo "Step 3: Installing Python packages..."

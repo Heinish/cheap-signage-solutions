@@ -4,7 +4,7 @@ CSS Signage Agent - Flask REST API Server
 Provides endpoints for managing the Raspberry Pi signage display
 """
 
-from flask import Flask, jsonify, request, send_from_directory, redirect
+from flask import Flask, jsonify, request, send_from_directory, redirect, send_file
 import subprocess
 import psutil
 import os
@@ -12,6 +12,7 @@ import json
 import time
 import socket
 from datetime import datetime
+import tempfile
 
 app = Flask(__name__, static_folder='static')
 CONFIG_FILE = '/etc/css/config.json'
@@ -143,6 +144,80 @@ def restart_browser():
             subprocess.run(['systemctl', 'restart', 'css-kiosk'], check=True)
 
         return jsonify({'success': True, 'message': 'Browser restarted'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/display/screenshot', methods=['GET'])
+def get_screenshot():
+    """Capture screenshot of current display"""
+    try:
+        # Create temporary file for screenshot
+        temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+        screenshot_path = temp_file.name
+        temp_file.close()
+
+        # Detect display server and capture screenshot
+        if os.environ.get('WAYLAND_DISPLAY'):
+            # Wayland - use grim
+            result = subprocess.run(['grim', screenshot_path], capture_output=True, timeout=5)
+        else:
+            # X11 - use scrot
+            result = subprocess.run(['scrot', screenshot_path], capture_output=True, timeout=5)
+
+        if result.returncode != 0:
+            # Cleanup and return error
+            os.unlink(screenshot_path)
+            return jsonify({'success': False, 'error': 'Screenshot capture failed'}), 500
+
+        # Send file and cleanup
+        return send_file(screenshot_path, mimetype='image/png', as_attachment=True,
+                        download_name='screenshot.png', max_age=0)
+
+    except subprocess.TimeoutExpired:
+        return jsonify({'success': False, 'error': 'Screenshot timeout'}), 500
+    except FileNotFoundError as e:
+        return jsonify({'success': False, 'error': 'Screenshot tool not installed (grim or scrot required)'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/display/rotate', methods=['POST'])
+def rotate_display():
+    """Rotate the display orientation"""
+    data = request.json
+
+    if not data or 'rotation' not in data:
+        return jsonify({'success': False, 'error': 'Rotation value required (0, 90, 180, or 270)'}), 400
+
+    rotation = data['rotation']
+    if rotation not in [0, 90, 180, 270]:
+        return jsonify({'success': False, 'error': 'Invalid rotation. Must be 0, 90, 180, or 270'}), 400
+
+    try:
+        # For Raspberry Pi, we modify /boot/firmware/config.txt
+        config_file = '/boot/firmware/config.txt'
+
+        # Read current config
+        with open(config_file, 'r') as f:
+            lines = f.readlines()
+
+        # Remove existing display_rotate lines
+        lines = [line for line in lines if not line.strip().startswith('display_rotate=')]
+
+        # Add new rotation setting
+        # display_rotate values: 0=normal, 1=90°, 2=180°, 3=270°
+        rotation_map = {0: 0, 90: 1, 180: 2, 270: 3}
+        lines.append(f'\n# CSS Signage - Display Rotation\ndisplay_rotate={rotation_map[rotation]}\n')
+
+        # Write back to config
+        with open(config_file, 'w') as f:
+            f.writelines(lines)
+
+        return jsonify({
+            'success': True,
+            'message': f'Display rotation set to {rotation}°. Reboot required to apply.',
+            'reboot_required': True
+        })
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
