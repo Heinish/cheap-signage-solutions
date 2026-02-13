@@ -95,7 +95,8 @@ systemctl daemon-reload
 echo ""
 echo "Step 8: Enabling services..."
 systemctl enable css-agent.service
-systemctl enable css-kiosk.service
+# css-kiosk.service is NOT enabled by default - enable it manually after testing
+# systemctl enable css-kiosk.service
 systemctl enable css-daily-reboot.timer
 
 echo ""
@@ -104,45 +105,9 @@ echo "Step 9: Configuring auto-login (for kiosk mode)..."
 raspi-config nonint do_boot_behaviour B4
 
 echo ""
-echo "Step 10: Configuring desktop environment..."
-# Create autostart directory
-mkdir -p "$ACTUAL_HOME/.config/autostart"
-
-# Create autostart entry for CSS Kiosk
-cat > "$ACTUAL_HOME/.config/autostart/css-kiosk.desktop" <<EOF
-[Desktop Entry]
-Type=Application
-Name=CSS Kiosk
-Exec=/opt/css-agent/scripts/start-kiosk.sh
-Terminal=false
-Hidden=false
-X-GNOME-Autostart-enabled=true
-EOF
-
-# Disable screen blanking
-cat > "$ACTUAL_HOME/.config/autostart/disable-screensaver.desktop" <<EOF
-[Desktop Entry]
-Type=Application
-Name=Disable Screensaver
-Exec=bash -c "xset s off; xset -dpms; xset s noblank"
-Terminal=false
-Hidden=false
-X-GNOME-Autostart-enabled=true
-EOF
-
-# Hide mouse cursor
-cat > "$ACTUAL_HOME/.config/autostart/unclutter.desktop" <<EOF
-[Desktop Entry]
-Type=Application
-Name=Unclutter
-Exec=unclutter -idle 0.1 -root
-Terminal=false
-Hidden=false
-X-GNOME-Autostart-enabled=true
-EOF
-
-# Set ownership
-chown -R "$ACTUAL_USER:$ACTUAL_USER" "$ACTUAL_HOME/.config"
+echo "Step 10: Skipping desktop autostart (use systemd services instead)..."
+# Note: Desktop autostart files are skipped to prevent boot loops
+# The kiosk will be controlled via systemd services only
 
 echo ""
 echo "======================================"
