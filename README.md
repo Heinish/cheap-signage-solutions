@@ -103,6 +103,8 @@ Base URL: `http://{pi-ip}:5000`
 | `/api/system/reboot` | POST | Reboot the Pi |
 | `/api/update` | POST | Pull updates from GitHub |
 | `/api/network/ip` | POST | Configure network IP |
+| `/api/settings/autoupdate` | GET/POST | Get or enable/disable auto-updates |
+| `/api/settings/reboot` | GET/POST | Get or enable/disable daily reboot |
 | `/api/health` | GET | Health check |
 
 ### Example API Calls

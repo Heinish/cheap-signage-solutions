@@ -342,6 +342,84 @@ static domain_name_servers={dns}
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/settings/autoupdate', methods=['GET', 'POST'])
+def autoupdate_settings():
+    """Get or configure auto-update settings"""
+    if request.method == 'GET':
+        try:
+            # Check if auto-update timer is enabled
+            result = subprocess.run(
+                ['systemctl', 'is-enabled', 'css-auto-update.timer'],
+                capture_output=True,
+                text=True
+            )
+            enabled = result.returncode == 0
+
+            return jsonify({
+                'enabled': enabled,
+                'schedule': '02:50 daily (10 min before reboot)'
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    else:  # POST
+        data = request.json
+        if not data or 'enabled' not in data:
+            return jsonify({'success': False, 'error': 'enabled parameter required'}), 400
+
+        try:
+            if data['enabled']:
+                subprocess.run(['systemctl', 'enable', 'css-auto-update.timer'], check=True)
+                subprocess.run(['systemctl', 'start', 'css-auto-update.timer'], check=True)
+                message = 'Auto-update enabled'
+            else:
+                subprocess.run(['systemctl', 'stop', 'css-auto-update.timer'], check=True)
+                subprocess.run(['systemctl', 'disable', 'css-auto-update.timer'], check=True)
+                message = 'Auto-update disabled'
+
+            return jsonify({'success': True, 'message': message})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/settings/reboot', methods=['GET', 'POST'])
+def reboot_settings():
+    """Get or configure daily reboot settings"""
+    if request.method == 'GET':
+        try:
+            # Check if daily reboot timer is enabled
+            result = subprocess.run(
+                ['systemctl', 'is-enabled', 'css-daily-reboot.timer'],
+                capture_output=True,
+                text=True
+            )
+            enabled = result.returncode == 0
+
+            return jsonify({
+                'enabled': enabled,
+                'schedule': '03:00 daily'
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    else:  # POST
+        data = request.json
+        if not data or 'enabled' not in data:
+            return jsonify({'success': False, 'error': 'enabled parameter required'}), 400
+
+        try:
+            if data['enabled']:
+                subprocess.run(['systemctl', 'enable', 'css-daily-reboot.timer'], check=True)
+                subprocess.run(['systemctl', 'start', 'css-daily-reboot.timer'], check=True)
+                message = 'Daily reboot enabled'
+            else:
+                subprocess.run(['systemctl', 'stop', 'css-daily-reboot.timer'], check=True)
+                subprocess.run(['systemctl', 'disable', 'css-daily-reboot.timer'], check=True)
+                message = 'Daily reboot disabled'
+
+            return jsonify({'success': True, 'message': message})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/health', methods=['GET'])
 def health():
     """Health check endpoint"""
