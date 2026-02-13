@@ -100,6 +100,8 @@ systemctl enable css-agent.service
 # css-kiosk.service is NOT enabled by default - enable it manually after testing
 # systemctl enable css-kiosk.service
 systemctl enable css-daily-reboot.timer
+systemctl enable css-auto-update.timer
+systemctl start css-auto-update.timer
 
 echo ""
 echo "Step 8.5: Configuring log rotation to prevent SD card filling..."

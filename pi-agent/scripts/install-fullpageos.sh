@@ -71,9 +71,11 @@ sed "s|User=pi|User=$ACTUAL_USER|g; s|/home/pi|$ACTUAL_HOME|g" \
 systemctl daemon-reload
 
 echo ""
-echo "Step 7: Enabling CSS API service..."
+echo "Step 7: Enabling CSS API service and auto-update timer..."
 systemctl enable css-agent.service
 systemctl start css-agent.service
+systemctl enable css-auto-update.timer
+systemctl start css-auto-update.timer
 
 echo ""
 echo "Step 7.5: Configuring log rotation to prevent SD card filling..."

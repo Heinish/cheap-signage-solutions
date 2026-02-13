@@ -1,0 +1,15 @@
+[Unit]
+Description=CSS Signage Auto-Update Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/css-agent
+ExecStart=/bin/bash -c 'git pull origin main && systemctl restart css-agent'
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
