@@ -38,9 +38,13 @@ mkdir -p /opt/css-agent
 mkdir -p /etc/css
 
 echo ""
-echo "Step 4: Copying CSS agent files..."
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cp -r "$SCRIPT_DIR"/* /opt/css-agent/
+echo "Step 4: Installing CSS agent from GitHub..."
+# Remove existing directory if it exists
+rm -rf /opt/css-agent
+# Clone from GitHub
+git clone https://github.com/Heinish/css.git /tmp/css-temp
+mv /tmp/css-temp/pi-agent /opt/css-agent
+rm -rf /tmp/css-temp
 chmod +x /opt/css-agent/scripts/*.sh
 
 echo ""
