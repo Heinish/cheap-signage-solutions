@@ -4,8 +4,7 @@ Requires=css-auto-update.service
 
 [Timer]
 # Run at 2:50 AM daily (10 minutes before reboot at 3:00 AM)
-OnCalendar=daily
-OnCalendar=02:50
+OnCalendar=*-*-* 02:50:00
 Persistent=true
 
 [Install]
