@@ -15,6 +15,11 @@ from datetime import datetime
 
 app = Flask(__name__, static_folder='static')
 CONFIG_FILE = '/etc/css/config.json'
+FULLPAGEOS_CONFIG = '/boot/firmware/fullpageos.txt'
+
+def is_fullpageos():
+    """Check if running on FullPageOS"""
+    return os.path.exists(FULLPAGEOS_CONFIG)
 
 def load_config():
     """Load configuration from file"""
@@ -113,18 +118,32 @@ def set_url():
 
     # Restart browser to apply new URL
     try:
-        subprocess.run(['systemctl', 'restart', 'css-kiosk'], check=True)
+        if is_fullpageos():
+            # FullPageOS: update config file and kill chromium
+            with open(FULLPAGEOS_CONFIG, 'w') as f:
+                f.write(url)
+            subprocess.run(['pkill', 'chromium'], check=False)  # Don't check return code
+        else:
+            # Standard CSS installation: restart systemd service
+            subprocess.run(['systemctl', 'restart', 'css-kiosk'], check=True)
+
         return jsonify({'success': True, 'message': f'URL changed to {url}'})
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/browser/restart', methods=['POST'])
 def restart_browser():
     """Restart the Chromium browser"""
     try:
-        subprocess.run(['systemctl', 'restart', 'css-kiosk'], check=True)
+        if is_fullpageos():
+            # FullPageOS: kill chromium (it will auto-restart)
+            subprocess.run(['pkill', 'chromium'], check=False)
+        else:
+            # Standard CSS installation: restart systemd service
+            subprocess.run(['systemctl', 'restart', 'css-kiosk'], check=True)
+
         return jsonify({'success': True, 'message': 'Browser restarted'})
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/system/reboot', methods=['POST'])
