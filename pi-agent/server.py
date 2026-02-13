@@ -4,7 +4,7 @@ CSS Signage Agent - Flask REST API Server
 Provides endpoints for managing the Raspberry Pi signage display
 """
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory, redirect
 import subprocess
 import psutil
 import os
@@ -13,7 +13,7 @@ import time
 import socket
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 CONFIG_FILE = '/etc/css/config.json'
 
 def load_config():
@@ -227,7 +227,22 @@ def health():
 
 @app.route('/', methods=['GET'])
 def index():
-    """Root endpoint - return basic info"""
+    """Root endpoint - redirect to waiting page"""
+    return redirect('/waiting')
+
+@app.route('/waiting', methods=['GET'])
+def waiting():
+    """Serve the waiting page"""
+    return send_from_directory('static', 'waiting.html')
+
+@app.route('/offline', methods=['GET'])
+def offline():
+    """Serve the offline page"""
+    return send_from_directory('static', 'offline.html')
+
+@app.route('/api/info', methods=['GET'])
+def info():
+    """API info endpoint"""
     config = load_config()
     return jsonify({
         'service': 'CSS Signage Agent',
