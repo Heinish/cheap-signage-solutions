@@ -155,7 +155,7 @@ async function setRebootSettings(ip, enabled) {
 
 async function updatePiNow(ip) {
   try {
-    const response = await axios.post(`http://${ip}:5000/api/update`, {}, { timeout: 30000 });
+    const response = await axios.post(`http://${ip}:5000/api/update`, {}, { timeout: 60000 }); // 60s timeout for git pull
     return { success: true, data: response.data };
   } catch (error) {
     return { success: false, error: error.message };
