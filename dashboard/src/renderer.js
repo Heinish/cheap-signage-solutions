@@ -38,6 +38,7 @@ function App() {
   const [selectedRoom, setSelectedRoom] = useState('');
   const [showRoomManager, setShowRoomManager] = useState(false);
   const [showUrlManager, setShowUrlManager] = useState(false);
+  const [restartingAll, setRestartingAll] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved === 'true';
@@ -156,6 +157,42 @@ function App() {
     }
   }
 
+  async function handleRestartAllBrowsers() {
+    const onlinePis = pis.filter(pi => pi.online);
+
+    if (onlinePis.length === 0) {
+      alert('⚠️ No online Pis to restart');
+      return;
+    }
+
+    if (!confirm(`🔄 Restart browsers on ${onlinePis.length} online Pi${onlinePis.length !== 1 ? 's' : ''}?`)) return;
+
+    setRestartingAll(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const pi of onlinePis) {
+      try {
+        const result = await ApiService.restartBrowser(pi.ip_address);
+        if (result.success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        failCount++;
+      }
+    }
+
+    setRestartingAll(false);
+
+    if (failCount === 0) {
+      alert(`✅ Successfully restarted ${successCount} browser${successCount !== 1 ? 's' : ''}!`);
+    } else {
+      alert(`⚠️ Restarted ${successCount} browser${successCount !== 1 ? 's' : ''}, ${failCount} failed`);
+    }
+  }
+
   if (loading) {
     return h('div', { className: 'loading' },
       h('div', { className: 'spinner' }),
@@ -177,6 +214,11 @@ function App() {
           h('button', { className: 'btn btn-primary', onClick: () => setShowAddDialog(true) }, '➕ Add Pi'),
           h('button', { className: 'btn btn-secondary', onClick: () => setShowRoomManager(true) }, '🏢 Manage Rooms'),
           h('button', { className: 'btn btn-secondary', onClick: () => setShowUrlManager(true) }, '🔗 Manage URLs'),
+          h('button', {
+            className: 'btn btn-secondary',
+            onClick: handleRestartAllBrowsers,
+            disabled: restartingAll || pis.filter(p => p.online).length === 0
+          }, restartingAll ? '⏳ Restarting All...' : '🔄 Restart All Browsers'),
           h('button', {
             className: 'btn btn-secondary',
             onClick: refreshPiStatus,
