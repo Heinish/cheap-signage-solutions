@@ -45,7 +45,7 @@ function App() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(refreshPiStatus, 30000);
+    const interval = setInterval(refreshPiStatus, 60000); // Refresh every 1 minute
     return () => clearInterval(interval);
   }, []);
 
