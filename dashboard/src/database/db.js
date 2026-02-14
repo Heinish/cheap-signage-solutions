@@ -9,7 +9,7 @@ class CSSDatabase {
   constructor(dbPath) {
     // Store as JSON file instead of SQLite
     this.dbPath = dbPath.replace('.db', '.json');
-    this.data = { pis: [], rooms: [], nextPiId: 1, nextRoomId: 1 };
+    this.data = { pis: [], rooms: [], urls: [], nextPiId: 1, nextRoomId: 1, nextUrlId: 1 };
     this.load();
   }
 
@@ -143,6 +143,38 @@ class CSSDatabase {
 
   getPisByRoom(roomId) {
     return this.data.pis.filter(p => p.room_id === roomId);
+  }
+
+  // ========== URL Operations ==========
+
+  getAllUrls() {
+    return this.data.urls || [];
+  }
+
+  addUrl(url, name) {
+    if (!this.data.urls) this.data.urls = [];
+    if (!this.data.nextUrlId) this.data.nextUrlId = 1;
+
+    const newUrl = {
+      id: this.data.nextUrlId++,
+      url,
+      name,
+      created_at: new Date().toISOString()
+    };
+    this.data.urls.push(newUrl);
+    this.save();
+    return newUrl;
+  }
+
+  removeUrl(id) {
+    if (!this.data.urls) return false;
+
+    const index = this.data.urls.findIndex(u => u.id === id);
+    if (index === -1) return false;
+
+    this.data.urls.splice(index, 1);
+    this.save();
+    return true;
   }
 
   // ========== Cleanup ==========

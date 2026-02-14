@@ -40,12 +40,12 @@ mkdir -p /etc/css
 echo ""
 echo "Step 4: Installing CSS agent from GitHub..."
 # Remove existing directory if it exists
-rm -rf /opt/css-agent
-# Clone from GitHub
-git clone https://github.com/Heinish/css.git /tmp/css-temp
-mv /tmp/css-temp/pi-agent /opt/css-agent
-rm -rf /tmp/css-temp
-chmod +x /opt/css-agent/scripts/*.sh
+rm -rf /opt/css
+# Clone entire repo to /opt/css (keep as git repo for updates)
+git clone https://github.com/Heinish/css.git /opt/css
+# Create symlink for backwards compatibility
+ln -sf /opt/css/pi-agent /opt/css-agent
+chmod +x /opt/css/pi-agent/scripts/*.sh
 
 echo ""
 echo "Step 5: Creating default configuration..."

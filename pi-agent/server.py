@@ -282,8 +282,11 @@ def reboot():
 def update():
     """Pull latest code from GitHub repository"""
     try:
+        # Use /opt/css (parent repo) or /opt/css-agent if it's a direct git clone
+        git_dir = '/opt/css' if os.path.exists('/opt/css/.git') else '/opt/css-agent'
+
         result = subprocess.run(
-            ['git', '-C', '/opt/css-agent', 'pull'],
+            ['git', '-C', git_dir, 'pull'],
             capture_output=True,
             text=True,
             timeout=30
