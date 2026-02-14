@@ -6,6 +6,20 @@
     <meta name="google" content="notranslate">
     <title>CSS Signage - Offline</title>
     <style>
+        /* Force hide all translate UI elements */
+        [class*="goog-"],
+        [id*="goog-"],
+        [class*="translate"],
+        [id*="translate"],
+        .goog-te-banner-frame,
+        .goog-te-menu-frame,
+        body > div[style*="translate"] {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
         * {
             margin: 0;
             padding: 0;
