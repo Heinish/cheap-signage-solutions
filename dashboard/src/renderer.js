@@ -31,11 +31,13 @@ const ApiService = {
 function App() {
   const [pis, setPis] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [urls, setUrls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState('');
   const [showRoomManager, setShowRoomManager] = useState(false);
+  const [showUrlManager, setShowUrlManager] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved === 'true';
@@ -54,12 +56,14 @@ function App() {
 
   async function loadData() {
     try {
-      const [pisData, roomsData] = await Promise.all([
+      const [pisData, roomsData, urlsData] = await Promise.all([
         window.api.getAllPis(),
-        window.api.getAllRooms()
+        window.api.getAllRooms(),
+        window.api.getAllUrls()
       ]);
       setPis(pisData || []);
       setRooms(roomsData || []);
+      setUrls(urlsData || []);
       setLoading(false);
       refreshPiStatus();
     } catch (error) {
@@ -131,6 +135,27 @@ function App() {
     }
   }
 
+  async function handleAddUrl(url, name) {
+    try {
+      const newUrl = await window.api.addUrl(url, name);
+      setUrls([...urls, newUrl]);
+      return true;
+    } catch (error) {
+      alert('❌ Failed to add URL: ' + error.message);
+      return false;
+    }
+  }
+
+  async function handleRemoveUrl(id) {
+    if (!confirm('🗑️ Delete this saved URL?')) return;
+    try {
+      await window.api.removeUrl(id);
+      setUrls(urls.filter(u => u.id !== id));
+    } catch (error) {
+      alert('❌ Failed to remove URL: ' + error.message);
+    }
+  }
+
   if (loading) {
     return h('div', { className: 'loading' },
       h('div', { className: 'spinner' }),
@@ -151,6 +176,7 @@ function App() {
         h('div', { className: 'toolbar-left' },
           h('button', { className: 'btn btn-primary', onClick: () => setShowAddDialog(true) }, '➕ Add Pi'),
           h('button', { className: 'btn btn-secondary', onClick: () => setShowRoomManager(true) }, '🏢 Manage Rooms'),
+          h('button', { className: 'btn btn-secondary', onClick: () => setShowUrlManager(true) }, '🔗 Manage URLs'),
           h('button', {
             className: 'btn btn-secondary',
             onClick: refreshPiStatus,
@@ -191,6 +217,7 @@ function App() {
                 key: pi.id,
                 pi,
                 rooms,
+                urls,
                 onRemove: () => handleRemovePi(pi.id),
                 onUpdate: loadData
               }));
@@ -210,15 +237,24 @@ function App() {
       onClose: () => setShowRoomManager(false),
       onAddRoom: handleAddRoom,
       onRemoveRoom: handleRemoveRoom
+    }),
+
+    // URL Manager Dialog
+    showUrlManager && h(UrlManagerDialog, {
+      urls,
+      onClose: () => setShowUrlManager(false),
+      onAddUrl: handleAddUrl,
+      onRemoveUrl: handleRemoveUrl
     })
   );
 }
 
 // ===== Pi Card Component =====
-function PiCard({ pi, rooms, onRemove, onUpdate }) {
+function PiCard({ pi, rooms, urls, onRemove, onUpdate }) {
   const [changing, setChanging] = useState(false);
   const [showUrlDialog, setShowUrlDialog] = useState(false);
   const [newUrl, setNewUrl] = useState('');
+  const [selectedUrlId, setSelectedUrlId] = useState('custom');
   const [restarting, setRestarting] = useState(false);
   const [rebooting, setRebooting] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -343,12 +379,33 @@ function PiCard({ pi, rooms, onRemove, onUpdate }) {
     showUrlDialog && h('div', { className: 'modal', onClick: () => setShowUrlDialog(false) },
       h('div', { className: 'modal-content', onClick: (e) => e.stopPropagation() },
         h('h2', null, '🔗 Change URL'),
+        urls && urls.length > 0 && h('div', { className: 'form-group' },
+          h('label', null, '📋 Choose from saved URLs:'),
+          h('select', {
+            value: selectedUrlId,
+            onChange: (e) => {
+              setSelectedUrlId(e.target.value);
+              if (e.target.value !== 'custom') {
+                const selectedUrl = urls.find(u => u.id === parseInt(e.target.value));
+                if (selectedUrl) setNewUrl(selectedUrl.url);
+              } else {
+                setNewUrl('');
+              }
+            }
+          },
+            h('option', { value: 'custom' }, 'Custom URL...'),
+            urls.map(url => h('option', { value: url.id, key: url.id }, url.name))
+          )
+        ),
         h('div', { className: 'form-group' },
-          h('label', null, 'New URL:'),
+          h('label', null, 'URL:'),
           h('input', {
             type: 'text',
             value: newUrl,
-            onChange: (e) => setNewUrl(e.target.value),
+            onChange: (e) => {
+              setNewUrl(e.target.value);
+              setSelectedUrlId('custom');
+            },
             placeholder: 'https://example.com',
             autoFocus: true
           })
@@ -465,6 +522,78 @@ function RoomManagerDialog({ rooms, onClose, onAddRoom, onRemoveRoom }) {
         h('div', { className: 'form-actions' },
           h('button', { type: 'button', className: 'btn btn-secondary', onClick: onClose }, 'Close'),
           h('button', { type: 'submit', className: 'btn btn-primary', disabled: !newRoomName.trim() }, '➕ Add Room')
+        )
+      )
+    )
+  );
+}
+
+// ===== URL Manager Dialog =====
+function UrlManagerDialog({ urls, onClose, onAddUrl, onRemoveUrl }) {
+  const [newUrlAddress, setNewUrlAddress] = useState('');
+  const [newUrlName, setNewUrlName] = useState('');
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!newUrlAddress.trim() || !newUrlName.trim()) return;
+
+    const success = await onAddUrl(newUrlAddress.trim(), newUrlName.trim());
+    if (success) {
+      setNewUrlAddress('');
+      setNewUrlName('');
+    }
+  }
+
+  return h('div', { className: 'modal', onClick: onClose },
+    h('div', { className: 'modal-content', onClick: (e) => e.stopPropagation() },
+      h('h2', null, '🔗 Manage Saved URLs'),
+
+      // List existing URLs
+      urls && urls.length > 0 && h('div', { className: 'room-list' },
+        h('h3', null, 'Saved URLs:'),
+        urls.map(url =>
+          h('div', { key: url.id, className: 'room-item' },
+            h('div', { style: { flex: 1 } },
+              h('strong', null, url.name),
+              h('br'),
+              h('small', { style: { color: 'var(--text-secondary)', wordBreak: 'break-all' } }, url.url)
+            ),
+            h('button', {
+              className: 'btn btn-sm btn-danger',
+              onClick: () => onRemoveUrl(url.id)
+            }, '🗑️ Delete')
+          )
+        )
+      ),
+
+      // Add new URL
+      h('form', { onSubmit: handleSubmit },
+        h('div', { className: 'form-group' },
+          h('label', null, '📛 Name:'),
+          h('input', {
+            type: 'text',
+            value: newUrlName,
+            onChange: (e) => setNewUrlName(e.target.value),
+            placeholder: 'e.g., Google Slides Dashboard',
+            autoFocus: true
+          })
+        ),
+        h('div', { className: 'form-group' },
+          h('label', null, '🔗 URL:'),
+          h('input', {
+            type: 'text',
+            value: newUrlAddress,
+            onChange: (e) => setNewUrlAddress(e.target.value),
+            placeholder: 'https://example.com'
+          })
+        ),
+        h('div', { className: 'form-actions' },
+          h('button', { type: 'button', className: 'btn btn-secondary', onClick: onClose }, 'Close'),
+          h('button', {
+            type: 'submit',
+            className: 'btn btn-primary',
+            disabled: !newUrlName.trim() || !newUrlAddress.trim()
+          }, '➕ Add URL')
         )
       )
     )
