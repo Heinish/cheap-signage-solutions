@@ -29,5 +29,10 @@ contextBridge.exposeInMainWorld('api', {
   getAllRooms: () => ipcRenderer.invoke('db:getAllRooms'),
   addRoom: (name) => ipcRenderer.invoke('db:addRoom', name),
   removeRoom: (id) => ipcRenderer.invoke('db:removeRoom', id),
-  assignPiToRoom: (piId, roomId) => ipcRenderer.invoke('db:assignPiToRoom', piId, roomId)
+  assignPiToRoom: (piId, roomId) => ipcRenderer.invoke('db:assignPiToRoom', piId, roomId),
+
+  // URL operations
+  getAllUrls: () => ipcRenderer.invoke('db:getAllUrls'),
+  addUrl: (url, name) => ipcRenderer.invoke('db:addUrl', url, name),
+  removeUrl: (id) => ipcRenderer.invoke('db:removeUrl', id)
 });

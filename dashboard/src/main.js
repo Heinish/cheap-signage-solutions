@@ -247,6 +247,19 @@ function setupIpcHandlers() {
   ipcMain.handle('db:assignPiToRoom', async (event, piId, roomId) => {
     return db.assignPiToRoom(piId, roomId);
   });
+
+  // URL operations
+  ipcMain.handle('db:getAllUrls', async () => {
+    return db.getAllUrls();
+  });
+
+  ipcMain.handle('db:addUrl', async (event, url, name) => {
+    return db.addUrl(url, name);
+  });
+
+  ipcMain.handle('db:removeUrl', async (event, id) => {
+    return db.removeUrl(id);
+  });
 }
 
 // This method will be called when Electron has finished
