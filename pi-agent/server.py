@@ -4,7 +4,7 @@ CSS Signage Agent - Flask REST API Server
 Provides endpoints for managing the Raspberry Pi signage display
 """
 
-from flask import Flask, jsonify, request, send_from_directory, redirect, send_file
+from flask import Flask, jsonify, request, send_from_directory, redirect, send_file, after_this_request
 import subprocess
 import psutil
 import os
@@ -182,23 +182,23 @@ def restart_browser():
 def get_screenshot():
     """Capture screenshot of current display"""
     try:
-        # Create temporary file for screenshot
-        temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-        screenshot_path = temp_file.name
-        temp_file.close()
+        # Use a simple temporary path that the X user can write to
+        import time
+        screenshot_path = f'/tmp/css-screenshot-{int(time.time())}.png'
 
         # Detect display server and capture screenshot
         if os.environ.get('WAYLAND_DISPLAY'):
             # Wayland - use grim
             result = subprocess.run(['grim', screenshot_path], capture_output=True, timeout=5)
         else:
-            # X11 - use scrot (need to run as X user with DISPLAY and XAUTHORITY set)
+            # X11 - use scrot with env to set DISPLAY and XAUTHORITY
+            # This matches the working manual command exactly:
+            # sudo -u box11 env DISPLAY=:0 XAUTHORITY=/home/box11/.Xauthority scrot /tmp/test.png
             user = get_chromium_user()
             xauthority = f'/home/{user}/.Xauthority'
-            # Use bash -c to properly set environment variables
-            cmd = f'DISPLAY=:0 XAUTHORITY={xauthority} /usr/bin/scrot {screenshot_path}'
+
             result = subprocess.run(
-                ['sudo', '-u', user, 'bash', '-c', cmd],
+                ['sudo', '-u', user, 'env', 'DISPLAY=:0', f'XAUTHORITY={xauthority}', 'scrot', screenshot_path],
                 capture_output=True,
                 timeout=5
             )
@@ -208,18 +208,32 @@ def get_screenshot():
             error_msg = result.stderr.decode('utf-8') if result.stderr else 'No stderr output'
             print(f"❌ Screenshot failed: returncode={result.returncode}, stderr={error_msg}")
             # Cleanup and return error
-            os.unlink(screenshot_path)
+            if os.path.exists(screenshot_path):
+                os.unlink(screenshot_path)
             return jsonify({'success': False, 'error': f'Screenshot capture failed: {error_msg}'}), 500
 
-        # Send file and cleanup
+        # Send file with callback to cleanup after sending
+        @after_this_request
+        def cleanup(response):
+            try:
+                if os.path.exists(screenshot_path):
+                    os.unlink(screenshot_path)
+            except:
+                pass
+            return response
+
         return send_file(screenshot_path, mimetype='image/png', as_attachment=True,
                         download_name='screenshot.png', max_age=0)
 
     except subprocess.TimeoutExpired:
+        if os.path.exists(screenshot_path):
+            os.unlink(screenshot_path)
         return jsonify({'success': False, 'error': 'Screenshot timeout'}), 500
     except FileNotFoundError as e:
         return jsonify({'success': False, 'error': 'Screenshot tool not installed (grim or scrot required)'}), 500
     except Exception as e:
+        if 'screenshot_path' in locals() and os.path.exists(screenshot_path):
+            os.unlink(screenshot_path)
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/display/rotate', methods=['POST'])

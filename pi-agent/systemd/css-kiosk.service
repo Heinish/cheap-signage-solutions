@@ -5,7 +5,7 @@ Wants=graphical.target
 
 [Service]
 Type=simple
-User=pi
+User={USER}
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/pi/.Xauthority
 ExecStart=/opt/css-agent/scripts/start-kiosk.sh

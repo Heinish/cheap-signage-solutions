@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=pi
+User={USER}
 WorkingDirectory=/opt/css-agent
 ExecStart=/usr/bin/python3 /opt/css-agent/network_monitor.py
 Restart=always
