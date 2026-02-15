@@ -192,10 +192,11 @@ def get_screenshot():
             # Wayland - use grim
             result = subprocess.run(['grim', screenshot_path], capture_output=True, timeout=5)
         else:
-            # X11 - use scrot (need to run as X user with DISPLAY set)
+            # X11 - use scrot (need to run as X user with DISPLAY and XAUTHORITY set)
             user = get_chromium_user()
+            xauthority = f'/home/{user}/.Xauthority'
             result = subprocess.run(
-                ['sudo', '-u', user, 'env', 'DISPLAY=:0', 'scrot', screenshot_path],
+                ['sudo', '-u', user, 'env', 'DISPLAY=:0', f'XAUTHORITY={xauthority}', 'scrot', screenshot_path],
                 capture_output=True,
                 timeout=5
             )
