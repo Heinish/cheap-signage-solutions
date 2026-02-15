@@ -40,7 +40,7 @@ echo ""
 echo "Step 4: Installing CSS agent from GitHub..."
 # Remove existing directory/symlink if it exists
 rm -rf /opt/css
-rm -f /opt/css-agent
+rm -rf /opt/css-agent
 # Clone entire repo to /opt/css (keep as git repo for updates)
 git clone https://github.com/Heinish/css.git /opt/css
 # Create symlink so /opt/css-agent points to /opt/css/pi-agent
