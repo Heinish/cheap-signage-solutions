@@ -195,8 +195,10 @@ def get_screenshot():
             # X11 - use scrot (need to run as X user with DISPLAY and XAUTHORITY set)
             user = get_chromium_user()
             xauthority = f'/home/{user}/.Xauthority'
+            # Use bash -c to properly set environment variables
+            cmd = f'DISPLAY=:0 XAUTHORITY={xauthority} /usr/bin/scrot {screenshot_path}'
             result = subprocess.run(
-                ['sudo', '-u', user, 'env', 'DISPLAY=:0', f'XAUTHORITY={xauthority}', 'scrot', screenshot_path],
+                ['sudo', '-u', user, 'bash', '-c', cmd],
                 capture_output=True,
                 timeout=5
             )
