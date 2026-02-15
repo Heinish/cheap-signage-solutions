@@ -192,17 +192,21 @@ def get_screenshot():
             result = subprocess.run(['grim', screenshot_path], capture_output=True, timeout=5)
         else:
             # X11 - use scrot as the X user
-            # Try using 'su' with shell command to properly set environment
+            # Use sudo -E to preserve environment variables
             user = get_chromium_user()
             xauthority = f'/home/{user}/.Xauthority'
 
-            # Use su with -c to run command with environment variables
-            cmd = f'DISPLAY=:0 XAUTHORITY={xauthority} scrot {screenshot_path}'
+            # Build environment with X11 variables
+            env = os.environ.copy()
+            env['DISPLAY'] = ':0'
+            env['XAUTHORITY'] = xauthority
+
+            # Use sudo -E to preserve environment
             result = subprocess.run(
-                ['su', user, '-c', cmd],
+                ['sudo', '-E', '-u', user, 'scrot', screenshot_path],
                 capture_output=True,
                 timeout=5,
-                shell=False
+                env=env
             )
 
         if result.returncode != 0:
