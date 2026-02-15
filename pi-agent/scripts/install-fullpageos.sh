@@ -118,23 +118,49 @@ fi
 CHROMIUM_HOME="/home/$CHROMIUM_USER"
 echo "  Chromium user detected: $CHROMIUM_USER"
 
-# Both fixes are required together - neither works alone:
-#   1. chromium-flags.conf with --disable-features=Translate
-#   2. Preferences JSON with "translate": {"enabled": false}
+# === FIX 1: /etc/chromium.d/ (the CORRECT Debian/Raspberry Pi OS way) ===
+# On Debian-based systems, /usr/bin/chromium-browser is a wrapper script that
+# sources all files in /etc/chromium.d/ and adds CHROMIUM_FLAGS to the command line.
+# This is the ONLY reliable way to pass flags on Raspberry Pi OS.
+# (chromium-flags.conf is an Arch Linux thing and does NOT work here)
+mkdir -p /etc/chromium.d
+cat > /etc/chromium.d/99-css-disable-translate <<'CHROMIUMD_EOF'
+# CSS Signage: Disable Chromium translate popup
+export CHROMIUM_FLAGS="$CHROMIUM_FLAGS --disable-features=Translate,TranslateUI --disable-translate"
+CHROMIUMD_EOF
+echo "  Created /etc/chromium.d/99-css-disable-translate"
 
-# Create Chromium config directory for the CORRECT user
+# === FIX 2: Patch FullPageOS start_chromium_browser script ===
+# FullPageOS has its own script that launches Chromium. We need to inject flags there too
+# because it may call chromium-browser with --app= which can bypass some flag loading.
+TRANSLATE_FLAGS="--disable-features=Translate,TranslateUI --disable-translate"
+PATCHED_LAUNCH=false
+
+# Search for the FullPageOS chromium launch script
+for launch_script in \
+    "$CHROMIUM_HOME/scripts/start_chromium_browser" \
+    /home/*/scripts/start_chromium_browser \
+    /opt/fullpageos/scripts/start_chromium_browser; do
+    if [ -f "$launch_script" ]; then
+        if ! grep -q "disable-features=Translate" "$launch_script" 2>/dev/null; then
+            # Insert translate flags before the first chromium-browser call
+            sed -i "s|chromium-browser|chromium-browser $TRANSLATE_FLAGS|g" "$launch_script"
+            echo "  Patched: $launch_script"
+            PATCHED_LAUNCH=true
+        else
+            echo "  Already patched: $launch_script"
+            PATCHED_LAUNCH=true
+        fi
+    fi
+done
+
+if [ "$PATCHED_LAUNCH" = false ]; then
+    echo "  Warning: Could not find FullPageOS launch script to patch"
+    echo "  The /etc/chromium.d/ approach should still work"
+fi
+
+# === FIX 3: Preferences JSON as defense in depth ===
 mkdir -p $CHROMIUM_HOME/.config/chromium/Default
-chown -R $CHROMIUM_USER:$CHROMIUM_USER $CHROMIUM_HOME/.config/chromium
-
-# FIX 1: Create chromium-flags.conf (Chromium reads this at startup on Linux)
-cat > $CHROMIUM_HOME/.config/chromium-flags.conf <<'FLAGS_EOF'
---disable-features=Translate,TranslateUI
---disable-translate
-FLAGS_EOF
-chown $CHROMIUM_USER:$CHROMIUM_USER $CHROMIUM_HOME/.config/chromium-flags.conf
-echo "  Created chromium-flags.conf for user $CHROMIUM_USER"
-
-# FIX 2: Disable translate in Preferences JSON
 cat > $CHROMIUM_HOME/.config/chromium/Default/Preferences <<'PREFS_EOF'
 {
    "translate": {
@@ -146,13 +172,13 @@ cat > $CHROMIUM_HOME/.config/chromium/Default/Preferences <<'PREFS_EOF'
    ]
 }
 PREFS_EOF
-chown $CHROMIUM_USER:$CHROMIUM_USER $CHROMIUM_HOME/.config/chromium/Default/Preferences
+chown -R $CHROMIUM_USER:$CHROMIUM_USER $CHROMIUM_HOME/.config/chromium
 echo "  Created Preferences JSON for user $CHROMIUM_USER"
 
 echo ""
 echo "Step 8: Enabling CSS API service..."
 systemctl enable css-agent.service
-systemctl start css-agent.service
+systemctl restart css-agent.service
 echo "  ℹ️  Auto-update and daily reboot timers are installed but disabled"
 echo "  ℹ️  Enable them via the dashboard or API as needed"
 
@@ -174,9 +200,8 @@ else
     echo "Warning: /boot/firmware/fullpageos.txt not found - you may need to configure FullPageOS manually"
 fi
 
-# Note: Chromium flags are set via ~/.config/chromium-flags.conf (Step 7)
-# The fullpageos-config.txt approach was removed as FullPageOS does not read it
-echo "Chromium translate fix applied via chromium-flags.conf and Preferences JSON (Step 7)"
+# Chromium translate flags are applied via /etc/chromium.d/ and launch script patching (Step 7)
+echo "Chromium translate fix applied via /etc/chromium.d/, launch script patch, and Preferences JSON (Step 7)"
 
 echo ""
 echo "======================================"

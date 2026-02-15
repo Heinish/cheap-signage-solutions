@@ -765,96 +765,80 @@ def get_chromium_user():
         return 'pi'
 
 def configure_chromium_preferences():
-    """Configure Chromium to disable translation via flags AND Preferences JSON"""
+    """Configure Chromium to disable translation via /etc/chromium.d/ and Preferences JSON"""
     if not is_fullpageos():
         return  # Only applies to FullPageOS
 
     try:
-        # Detect the user running Chromium
         user = get_chromium_user()
-        config_dir = f'/home/{user}/.config'
-        flags_file = f'{config_dir}/chromium-flags.conf'
-        prefs_file = f'{config_dir}/chromium/Default/Preferences'
 
-        # Ensure .config directory exists
-        os.makedirs(config_dir, exist_ok=True)
+        # ===== PART 1: /etc/chromium.d/ (the correct Debian/Raspberry Pi OS way) =====
+        # On Debian-based systems, /usr/bin/chromium-browser is a wrapper that sources
+        # all files in /etc/chromium.d/ and passes CHROMIUM_FLAGS to the real binary.
+        # This is the ONLY reliable way to pass flags on Raspberry Pi OS.
+        chromiumd_dir = '/etc/chromium.d'
+        chromiumd_file = os.path.join(chromiumd_dir, '99-css-disable-translate')
+        chromiumd_content = '# CSS Signage: Disable Chromium translate popup\nexport CHROMIUM_FLAGS="$CHROMIUM_FLAGS --disable-features=Translate,TranslateUI --disable-translate"\n'
 
-        # ===== PART 1: Create chromium-flags.conf =====
-        # IMPORTANT: --disable-features must be a SINGLE flag with comma-separated values
-        # Multiple --disable-features= lines causes Chromium to only use the last one
-        required_flags = [
-            '--disable-features=Translate,TranslateUI',
-            '--disable-translate',
-            '--no-first-run',
-            '--noerrdialogs',
-            '--disable-infobars',
-            '--disable-session-crashed-bubble'
-        ]
+        os.makedirs(chromiumd_dir, exist_ok=True)
+        needs_update = True
+        if os.path.exists(chromiumd_file):
+            with open(chromiumd_file, 'r') as f:
+                if f.read() == chromiumd_content:
+                    needs_update = False
 
-        # Read existing flags if file exists
-        existing_flags = []
-        if os.path.exists(flags_file):
-            with open(flags_file, 'r') as f:
-                existing_flags = [line.strip() for line in f if line.strip()]
+        if needs_update:
+            with open(chromiumd_file, 'w') as f:
+                f.write(chromiumd_content)
+            print(f"✅ Created {chromiumd_file}")
+        else:
+            print(f"✅ {chromiumd_file} already configured")
 
-        # Remove old broken separate --disable-features lines that conflict
-        # (Chromium only uses the LAST --disable-features= flag, so separate lines break things)
-        existing_flags = [f for f in existing_flags if not (
-            f.startswith('--disable-features=') and f != '--disable-features=Translate,TranslateUI'
-        )]
+        # ===== PART 2: Patch FullPageOS launch script =====
+        import glob as g
+        translate_flags = '--disable-features=Translate,TranslateUI --disable-translate'
+        for pattern in [f'/home/{user}/scripts/start_chromium_browser',
+                        '/home/*/scripts/start_chromium_browser']:
+            for launch_script in g.glob(pattern):
+                if os.path.isfile(launch_script):
+                    with open(launch_script, 'r') as f:
+                        content = f.read()
+                    if 'disable-features=Translate' not in content:
+                        content = content.replace('chromium-browser',
+                                                  f'chromium-browser {translate_flags}')
+                        with open(launch_script, 'w') as f:
+                            f.write(content)
+                        print(f"✅ Patched launch script: {launch_script}")
 
-        # Add missing flags
-        flags_updated = False
-        for flag in required_flags:
-            if flag not in existing_flags:
-                existing_flags.append(flag)
-                flags_updated = True
-
-        # Write flags file
-        if flags_updated or not os.path.exists(flags_file):
-            with open(flags_file, 'w') as f:
-                for flag in existing_flags:
-                    f.write(flag + '\n')
-
-            # Set correct ownership
-            import pwd
-            uid = pwd.getpwnam(user).pw_uid
-            gid = pwd.getpwnam(user).pw_gid
-            os.chown(flags_file, uid, gid)
-
-            print(f"✅ Chromium flags updated: {flags_file}")
-
-        # ===== PART 2: Modify Preferences JSON =====
+        # ===== PART 3: Modify Preferences JSON as defense in depth =====
+        prefs_dir = f'/home/{user}/.config/chromium/Default'
+        prefs_file = os.path.join(prefs_dir, 'Preferences')
         if os.path.exists(prefs_file):
             try:
-                # Read current preferences
                 with open(prefs_file, 'r') as f:
                     prefs = json.load(f)
 
-                # Check if translate setting needs to be added
                 if 'translate' not in prefs or prefs.get('translate', {}).get('enabled') != False:
-                    # Add translate disabled setting
                     if 'translate' not in prefs:
                         prefs['translate'] = {}
                     prefs['translate']['enabled'] = False
 
-                    # Write back
                     with open(prefs_file, 'w') as f:
                         json.dump(prefs, f, indent=2)
 
-                    # Set correct ownership
+                    import pwd
+                    uid = pwd.getpwnam(user).pw_uid
+                    gid = pwd.getpwnam(user).pw_gid
                     os.chown(prefs_file, uid, gid)
 
                     print(f"✅ Translate disabled in Preferences JSON: {prefs_file}")
                 else:
                     print(f"✅ Preferences JSON already has translate disabled")
 
-            except json.JSONDecodeError as e:
-                print(f"⚠️ Warning: Could not parse Preferences JSON: {e}")
-            except Exception as e:
+            except (json.JSONDecodeError, Exception) as e:
                 print(f"⚠️ Warning: Could not update Preferences JSON: {e}")
         else:
-            print(f"ℹ️ Preferences file not found yet (Chromium hasn't been run): {prefs_file}")
+            print(f"ℹ️ Preferences file not found yet: {prefs_file}")
 
     except Exception as e:
         print(f"⚠️ Warning: Could not configure Chromium: {e}")
