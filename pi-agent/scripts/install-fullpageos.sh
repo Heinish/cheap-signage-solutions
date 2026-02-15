@@ -64,11 +64,20 @@ else
 fi
 
 echo ""
-echo "Step 6: Installing CSS API service..."
+echo "Step 6: Installing CSS API service and timers..."
 # Only install the API service, not the kiosk (FullPageOS handles that)
 # Replace {USER} placeholder with actual user, but run as root for /boot/firmware access
 sed "s|{USER}|root|g; s|/home/pi|$ACTUAL_HOME|g" \
     /opt/css-agent/systemd/css-agent.service > /etc/systemd/system/css-agent.service
+
+# Install auto-update timer and service
+cp /opt/css-agent/systemd/css-auto-update.timer /etc/systemd/system/
+cp /opt/css-agent/systemd/css-auto-update.service /etc/systemd/system/
+
+# Install daily reboot timer and service
+cp /opt/css-agent/systemd/css-daily-reboot.timer /etc/systemd/system/
+cp /opt/css-agent/systemd/css-daily-reboot.service /etc/systemd/system/
+
 systemctl daemon-reload
 
 # Set proper permissions on config files
@@ -96,11 +105,13 @@ PREFS_EOF
 chown $ACTUAL_USER:$ACTUAL_USER /home/$ACTUAL_USER/.config/chromium/Default/Preferences
 
 echo ""
-echo "Step 8: Enabling CSS API service and auto-update timer..."
+echo "Step 8: Enabling CSS API service, auto-update timer, and daily reboot..."
 systemctl enable css-agent.service
 systemctl start css-agent.service
 systemctl enable css-auto-update.timer
 systemctl start css-auto-update.timer
+systemctl enable css-daily-reboot.timer
+systemctl start css-daily-reboot.timer
 
 echo ""
 echo "Step 9: Configuring log rotation to prevent SD card filling..."
