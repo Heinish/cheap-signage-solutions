@@ -57,17 +57,13 @@ systemctl enable css-firstboot.service
 systemctl enable css-agent.service
 systemctl enable css-kiosk.service
 
-# HDMI: force 1920x1080@60 like the FullPageOS install script does
-if ! grep -q "hdmi_group=" /boot/firmware/config.txt; then
-cat >> /boot/firmware/config.txt <<'HDMIEOF'
-
-# CSS Signage: force 1920x1080 @ 60Hz
-hdmi_force_hotplug=1
-hdmi_group=2
-hdmi_mode=82
-disable_overscan=1
-framebuffer_width=1920
-framebuffer_height=1080
-HDMIEOF
-fi
+# Deliberately NOT forcing hdmi_group/hdmi_mode/framebuffer_width/height
+# here. Those are legacy (non-KMS) firmware-framebuffer settings carried
+# over from the old FullPageOS install script - this image uses the
+# default KMS graphics driver (dtoverlay=vc4-kms-v3d), and mixing legacy
+# framebuffer forcing with KMS crashes Xorg on startup (signal 6, right
+# after loading the "fb" submodule). Resolution is instead requested at
+# the Xorg level via /usr/share/X11/xorg.conf.d/10-resolution.conf,
+# written by the agent itself (device_control.ensure_display_resolution),
+# which is the KMS-compatible way to do it.
 EOF
