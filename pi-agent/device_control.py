@@ -162,8 +162,12 @@ def restart_chromium():
     else:
         # We own the whole X session (css-kiosk.service) - restart it
         # outright rather than guessing whether a bare pkill will bring
-        # the session back cleanly.
-        subprocess.run(['sudo', 'systemctl', 'restart', 'css-kiosk.service'], check=False)
+        # the session back cleanly. --no-block queues the restart and
+        # returns immediately instead of waiting for the full X/Chromium
+        # startup (which can take 30-60s+ on real hardware) - otherwise
+        # this blocks long enough that the mainserver's command timeout
+        # fires before the agent can report success.
+        subprocess.run(['sudo', 'systemctl', 'restart', '--no-block', 'css-kiosk.service'], check=False)
     return {'success': True, 'message': 'Browser restarted'}
 
 
