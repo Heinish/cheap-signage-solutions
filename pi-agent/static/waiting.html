@@ -90,26 +90,57 @@
             font-size: 32px;
             opacity: 0.8;
         }
+
+        .subtitle {
+            font-size: 22px;
+            opacity: 0.85;
+            margin-top: 12px;
+        }
+
+        .ip-footer {
+            margin-top: 30px;
+            font-size: 18px;
+            opacity: 0.6;
+            font-family: 'Courier New', monospace;
+        }
     </style>
     <script>
-        // Fetch IP address from API on page load
-        async function loadIpAddress() {
+        async function refresh() {
+            const codeEl = document.getElementById('pairing-code');
+            const subtitleEl = document.getElementById('subtitle');
+            const ipEl = document.getElementById('ip-footer');
+
             try {
                 const response = await fetch('/api/status');
                 const data = await response.json();
-                const ipElement = document.getElementById('ip-address');
+                const ms = data.mainserver || {};
+
                 if (data.ip_address) {
-                    ipElement.textContent = data.ip_address;
-                    ipElement.classList.remove('loading');
+                    ipEl.textContent = 'IP: ' + data.ip_address;
+                }
+
+                if (ms.mainserver_status === 'pairing' && ms.pairing_code) {
+                    codeEl.textContent = ms.pairing_code;
+                    codeEl.classList.remove('loading');
+                    subtitleEl.textContent = 'Enter this code in the CSS dashboard to add this display';
+                } else if (ms.mainserver_status === 'connected') {
+                    codeEl.textContent = 'Connected';
+                    codeEl.classList.remove('loading');
+                    subtitleEl.textContent = 'Waiting for a URL to be set from the dashboard';
+                } else if (ms.mainserver_status === 'connecting') {
+                    codeEl.textContent = 'Connecting...';
+                    subtitleEl.textContent = 'Reaching the mainserver';
                 } else {
-                    ipElement.textContent = 'Unable to detect IP';
+                    codeEl.textContent = 'Not configured';
+                    subtitleEl.textContent = 'No mainserver URL set on this device yet';
                 }
             } catch (error) {
-                document.getElementById('ip-address').textContent = 'Unable to detect IP';
+                codeEl.textContent = 'Unable to reach agent';
             }
         }
 
-        window.addEventListener('load', loadIpAddress);
+        window.addEventListener('load', refresh);
+        setInterval(refresh, 3000);
     </script>
 </head>
 <body>
@@ -118,8 +149,10 @@
         <h1>Add to Dashboard</h1>
 
         <div class="ip-box pulse">
-            <div id="ip-address" class="ip-address loading">Loading...</div>
+            <div id="pairing-code" class="ip-address loading">Loading...</div>
         </div>
+        <div id="subtitle" class="subtitle"></div>
+        <div id="ip-footer" class="ip-footer"></div>
     </div>
 </body>
 </html>

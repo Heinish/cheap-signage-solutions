@@ -1,0 +1,11 @@
+services:
+  mainserver:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - css-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  css-data:

@@ -30,7 +30,7 @@ apt-get install -y python3-pip jq git grim scrot fbgrab
 
 echo ""
 echo "Step 2: Installing Python packages..."
-pip3 install --break-system-packages flask psutil Pillow
+pip3 install --break-system-packages flask psutil Pillow websockets
 
 echo ""
 echo "Step 3: Creating directories..."
@@ -56,12 +56,21 @@ if [ ! -f /etc/css/config.json ]; then
     cat > /etc/css/config.json <<EOF
 {
   "name": "Pi-$(hostname)",
-  "room": "",
   "display_url": "http://localhost:5000/waiting",
-  "api_port": 5000
+  "api_port": 5000,
+  "mainserver_url": ${CSS_MAINSERVER_URL:+\"$CSS_MAINSERVER_URL\"}${CSS_MAINSERVER_URL:-null},
+  "device_uid": null,
+  "device_token": null
 }
 EOF
     echo "Created default config at /etc/css/config.json"
+    if [ -z "$CSS_MAINSERVER_URL" ]; then
+        echo "  No mainserver_url set - the display will wait until you set one."
+        echo "  Re-run with: CSS_MAINSERVER_URL=http://your-server:8000 curl -sSL ... | sudo -E bash"
+        echo "  Or set it later: sudo nano /etc/css/config.json"
+    else
+        echo "  mainserver_url set to $CSS_MAINSERVER_URL"
+    fi
 else
     echo "Config file already exists, skipping..."
 fi
