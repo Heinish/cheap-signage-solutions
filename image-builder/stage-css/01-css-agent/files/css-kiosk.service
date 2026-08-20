@@ -1,0 +1,20 @@
+[Unit]
+Description=CSS Signage Kiosk (X11 + openbox + Chromium)
+After=css-firstboot.service systemd-user-sessions.service
+Wants=css-firstboot.service
+Conflicts=getty@tty1.service
+
+[Service]
+User=kiosk
+Group=kiosk
+PAMName=login
+TTYPath=/dev/tty1
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+Restart=always
+RestartSec=2
+ExecStart=/usr/bin/startx /opt/css/pi-agent/kiosk/start-kiosk.sh -- :0 vt1 -nocursor
+
+[Install]
+WantedBy=multi-user.target

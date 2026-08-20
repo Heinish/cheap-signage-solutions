@@ -1,0 +1,13 @@
+[Unit]
+Description=CSS Signage first-boot provisioning
+Before=css-agent.service
+ConditionPathExists=!/etc/css/.firstboot-done
+
+[Service]
+Type=oneshot
+ExecStart=/opt/css/pi-agent/kiosk/css-firstboot.sh
+ExecStartPost=/usr/bin/touch /etc/css/.firstboot-done
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

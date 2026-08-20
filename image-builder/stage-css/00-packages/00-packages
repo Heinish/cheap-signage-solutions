@@ -1,0 +1,16 @@
+xserver-xorg
+xinit
+x11-xserver-utils
+openbox
+unclutter
+chromium
+python3-flask
+python3-psutil
+python3-pil
+python3-pip
+python3-venv
+git
+curl
+jq
+scrot
+fbgrab

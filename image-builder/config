@@ -1,0 +1,16 @@
+IMG_NAME='css-signage'
+RELEASE=bookworm
+DEPLOY_COMPRESSION=xz
+DEPLOY_ZIP=0
+LOCALE_DEFAULT=en_US.UTF-8
+TARGET_HOSTNAME=css-signage
+KEYBOARD_KEYMAP=us
+KEYBOARD_LAYOUT="English (US)"
+TIMEZONE_DEFAULT=Etc/UTC
+FIRST_USER_NAME=pi
+FIRST_USER_PASS=raspberry
+ENABLE_SSH=1
+
+# Base (stage0-2) = headless Raspberry Pi OS Lite. Everything above that is
+# our own stage - no desktop environment, no FullPageOS, nothing else.
+STAGE_LIST="stage0 stage1 stage2 ./stage-css"
