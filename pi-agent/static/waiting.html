@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>CSS Signage - Add to Dashboard</title>
+    <title>CSS Signage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Force hide all translate UI elements */
         [class*="goog-"],
@@ -20,94 +23,158 @@
             pointer-events: none !important;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg: #0a0c0f;
+            --border: #23272f;
+            --border-strong: #333944;
+            --text-primary: #e9ebee;
+            --text-secondary: #9aa1ac;
+            --text-tertiary: #5f6672;
+            --accent: #d9a441;
+            --accent-strong: #f0bc5c;
+            --accent-dim: rgba(217, 164, 65, 0.14);
+            --status-online: #3fc98a;
+            --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: var(--font-sans);
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse 1100px 600px at 15% -10%, rgba(217, 164, 65, 0.07), transparent 60%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: auto, 48px 48px, 48px 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            color: white;
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
             text-align: center;
-            max-width: 800px;
+            max-width: 720px;
             padding: 40px;
         }
 
-        .logo {
-            font-size: 72px;
-            font-weight: bold;
-            margin-bottom: 40px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 48px;
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            background: linear-gradient(155deg, var(--accent-strong), var(--accent) 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 17px;
+            color: #1a1408;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
         }
 
         h1 {
-            font-size: 56px;
-            margin-bottom: 40px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-            line-height: 1.4;
-        }
-
-        .ip-box {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 40px;
-            margin: 50px auto;
-            max-width: 600px;
-            backdrop-filter: blur(10px);
-        }
-
-        .ip-address {
-            font-size: 64px;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-            margin: 20px 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .pulse {
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.7;
-            }
-        }
-
-        .loading {
-            font-size: 32px;
-            opacity: 0.8;
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
         }
 
         .subtitle {
-            font-size: 22px;
-            opacity: 0.85;
-            margin-top: 12px;
+            font-size: 14.5px;
+            color: var(--text-secondary);
+            margin-bottom: 36px;
         }
 
-        .ip-footer {
-            margin-top: 30px;
-            font-size: 18px;
-            opacity: 0.6;
-            font-family: 'Courier New', monospace;
+        .code-card {
+            background: var(--accent-dim);
+            border: 1px solid rgba(217, 164, 65, 0.32);
+            border-radius: 14px;
+            padding: 40px;
+            margin-bottom: 28px;
+        }
+
+        .code-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-strong);
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .pairing-code {
+            font-family: var(--font-mono);
+            font-size: 56px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            color: var(--accent-strong);
+        }
+
+        .pairing-code.loading {
+            font-size: 28px;
+            color: var(--text-tertiary);
+            letter-spacing: normal;
+        }
+
+        .status-line {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13.5px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .status-dot.connected { background: var(--status-online); }
+
+        .status-dot.pulse {
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0.45); }
+            70% { box-shadow: 0 0 0 7px rgba(217, 164, 65, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); }
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-family: var(--font-mono);
         }
     </style>
     <script>
         async function refresh() {
             const codeEl = document.getElementById('pairing-code');
             const subtitleEl = document.getElementById('subtitle');
+            const dotEl = document.getElementById('status-dot');
             const ipEl = document.getElementById('ip-footer');
 
             try {
@@ -116,26 +183,33 @@
                 const ms = data.mainserver || {};
 
                 if (data.ip_address) {
-                    ipEl.textContent = 'IP: ' + data.ip_address;
+                    ipEl.textContent = data.ip_address;
                 }
 
                 if (ms.mainserver_status === 'pairing' && ms.pairing_code) {
                     codeEl.textContent = ms.pairing_code;
                     codeEl.classList.remove('loading');
-                    subtitleEl.textContent = 'Enter this code in the CSS dashboard to add this display';
+                    subtitleEl.textContent = 'Enter this code in the mainserver dashboard to add this display';
+                    dotEl.className = 'status-dot pulse';
                 } else if (ms.mainserver_status === 'connected') {
                     codeEl.textContent = 'Connected';
-                    codeEl.classList.remove('loading');
+                    codeEl.classList.add('loading');
                     subtitleEl.textContent = 'Waiting for a URL to be set from the dashboard';
+                    dotEl.className = 'status-dot connected';
                 } else if (ms.mainserver_status === 'connecting') {
-                    codeEl.textContent = 'Connecting...';
+                    codeEl.textContent = 'Connecting…';
+                    codeEl.classList.add('loading');
                     subtitleEl.textContent = 'Reaching the mainserver';
+                    dotEl.className = 'status-dot pulse';
                 } else {
                     codeEl.textContent = 'Not configured';
+                    codeEl.classList.add('loading');
                     subtitleEl.textContent = 'No mainserver URL set on this device yet';
+                    dotEl.className = 'status-dot';
                 }
             } catch (error) {
                 codeEl.textContent = 'Unable to reach agent';
+                codeEl.classList.add('loading');
             }
         }
 
@@ -145,14 +219,25 @@
 </head>
 <body>
     <div class="container">
-        <div class="logo">CSS</div>
-        <h1>Add to Dashboard</h1>
-
-        <div class="ip-box pulse">
-            <div id="pairing-code" class="ip-address loading">Loading...</div>
+        <div class="brand">
+            <div class="brand-mark">CS</div>
+            <div class="brand-name">CSS Signage</div>
         </div>
-        <div id="subtitle" class="subtitle"></div>
-        <div id="ip-footer" class="ip-footer"></div>
+
+        <h1>Add this display</h1>
+        <div id="subtitle" class="subtitle">Loading…</div>
+
+        <div class="code-card">
+            <div class="code-label">Pairing code</div>
+            <div id="pairing-code" class="pairing-code loading">Loading…</div>
+        </div>
+
+        <div class="status-line">
+            <span id="status-dot" class="status-dot"></span>
+            Waiting for connection
+        </div>
+
+        <div class="footer">IP: <span id="ip-footer">—</span></div>
     </div>
 </body>
 </html>

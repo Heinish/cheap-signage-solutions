@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
     <title>CSS Signage - Offline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Force hide all translate UI elements */
         [class*="goog-"],
         [id*="goog-"],
         [class*="translate"],
@@ -20,174 +22,141 @@
             pointer-events: none !important;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg: #0a0c0f;
+            --text-primary: #e9ebee;
+            --text-secondary: #9aa1ac;
+            --text-tertiary: #5f6672;
+            --status-offline: #e35d5d;
+            --status-offline-dim: rgba(227, 93, 93, 0.14);
+            --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            font-family: var(--font-sans);
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse 1100px 600px at 85% -10%, rgba(227, 93, 93, 0.06), transparent 60%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: auto, 48px 48px, 48px 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            color: white;
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
             text-align: center;
-            max-width: 800px;
+            max-width: 640px;
             padding: 40px;
         }
 
-        .icon {
-            font-size: 120px;
-            margin-bottom: 40px;
-            animation: float 3s ease-in-out infinite;
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 48px;
         }
 
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-20px);
-            }
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            background: linear-gradient(155deg, #6b7280, #4b5563 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 17px;
+            color: #0d0f13;
         }
 
-        .logo {
-            font-size: 64px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        .brand-name {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 6px 16px 6px 12px;
+            border-radius: 999px;
+            background: var(--status-offline-dim);
+            color: var(--status-offline);
+            margin-bottom: 28px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse-dot 1.8s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { box-shadow: 0 0 0 0 rgba(227, 93, 93, 0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(227, 93, 93, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(227, 93, 93, 0); }
         }
 
         h1 {
-            font-size: 52px;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            letter-spacing: -0.01em;
         }
 
         .message {
-            font-size: 32px;
-            margin: 30px 0;
-            opacity: 0.95;
-            line-height: 1.4;
-        }
-
-        .status-box {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 30px;
-            margin: 40px auto;
-            max-width: 600px;
-            backdrop-filter: blur(10px);
-        }
-
-        .status-text {
-            font-size: 24px;
-            margin: 10px 0;
-        }
-
-        .blink {
-            animation: blink 1.5s ease-in-out infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.3;
-            }
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 8px;
         }
 
         .reconnect-info {
-            font-size: 20px;
-            margin-top: 40px;
-            opacity: 0.8;
-        }
-
-        .wifi-icon {
-            display: inline-block;
-            position: relative;
-            width: 100px;
-            height: 80px;
-            margin: 30px auto;
-        }
-
-        .wifi-icon::before,
-        .wifi-icon::after {
-            content: "";
-            position: absolute;
-            border: 3px solid white;
-            border-radius: 50%;
-        }
-
-        .wifi-icon::before {
-            width: 100%;
-            height: 100%;
-            opacity: 0.3;
-            animation: wifi-pulse 2s ease-out infinite;
-        }
-
-        .wifi-icon::after {
-            width: 60%;
-            height: 60%;
-            left: 20%;
-            top: 20%;
-            opacity: 0.3;
-            animation: wifi-pulse 2s ease-out 0.5s infinite;
-        }
-
-        @keyframes wifi-pulse {
-            0% {
-                transform: scale(0.5);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1.5);
-                opacity: 0;
-            }
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-top: 28px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="icon">⚠️</div>
-
-        <div class="logo">CSS</div>
-        <h1>Network Connection Lost</h1>
-
-        <div class="status-box">
-            <div class="status-text blink">🔴 Offline</div>
-            <div class="wifi-icon"></div>
+        <div class="brand">
+            <div class="brand-mark">CS</div>
+            <div class="brand-name">CSS Signage</div>
         </div>
 
-        <div class="message">
-            Please check your network connection.<br>
-            This display will automatically reconnect when the network is restored.
+        <div class="status-pill">
+            <span class="status-dot"></span>
+            Network offline
         </div>
 
-        <div class="reconnect-info">
-            The system is continuously monitoring the network connection and will resume normal operation automatically.
-        </div>
+        <h1>Connection lost</h1>
+        <div class="message">Please check the network connection for this display.</div>
+        <div class="message">It will resume automatically once the connection is restored.</div>
+
+        <div class="reconnect-info">Checking every 10 seconds…</div>
     </div>
 
     <script>
-        // Try to reconnect every 10 seconds
         setInterval(() => {
             fetch('http://localhost:5000/api/health')
-                .then(() => {
-                    // Connection restored, reload to get back to configured URL
-                    location.reload();
-                })
-                .catch(() => {
-                    // Still offline, keep showing this page
-                    console.log('Still offline, retrying...');
-                });
+                .then(() => location.reload())
+                .catch(() => console.log('Still offline, retrying...'));
         }, 10000);
     </script>
 </body>
